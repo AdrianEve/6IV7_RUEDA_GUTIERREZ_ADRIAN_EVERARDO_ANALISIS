@@ -8,7 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#media
 df = pd.read_csv('./EstadisticaDescriptiva/housing.csv')
 
 media= df["median_house_value"].mean()
@@ -21,13 +20,11 @@ rango=df["median_house_value"].max() - df["median_house_value"].min()
 df['median_house_value_vs_population'] = df['median_house_value'] / df['population']
 plt.figure(figsize=(10, 6))
 sns.barplot(x='median_house_value', y='population', data=df, color='blue', label="Median House Value vs Population")
-# Añadir etiquetas y título
 plt.xlabel('Median House Value')
 plt.ylabel('Population')
 plt.title('Comparación de Median House Value con Population y su Promedio')
 plt.legend()
 
-# Mostrar el gráfico
 plt.show()
 
 print("Media", media)
