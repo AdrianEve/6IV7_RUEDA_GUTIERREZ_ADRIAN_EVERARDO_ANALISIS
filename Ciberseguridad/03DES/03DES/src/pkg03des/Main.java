@@ -5,18 +5,18 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
+import java.util.Base64;
 
 public class Main extends JFrame {
-    
+
     private JButton btnCargar, btnCifrar, btnDescifrar;
     private JTextArea areaTexto;
     private File archivoSeleccionado;
     private SecretKey clave;
 
     public Main() {
-        super("Cifrado DES con Interfaz");
+        super("Cifrado y Descifrado DES");
 
         // Crear interfaz
         setLayout(new BorderLayout());
@@ -38,12 +38,13 @@ public class Main extends JFrame {
         add(scroll, BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
 
-        // Eventos
+        // Eventos de los botones
         btnCargar.addActionListener(e -> cargarArchivo());
         btnCifrar.addActionListener(e -> cifrarArchivo());
         btnDescifrar.addActionListener(e -> descifrarArchivo());
 
-        setSize(500, 400);
+        // Configurar la ventana
+        setSize(600, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -55,7 +56,7 @@ public class Main extends JFrame {
             archivoSeleccionado = selector.getSelectedFile();
             try {
                 String contenido = new String(java.nio.file.Files.readAllBytes(archivoSeleccionado.toPath()));
-                areaTexto.setText(contenido);
+                areaTexto.setText(contenido); // Mostrar contenido del archivo en el JTextArea
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error al leer el archivo.");
             }
@@ -69,17 +70,19 @@ public class Main extends JFrame {
         }
 
         try {
+            // Generar una clave DES
             KeyGenerator generadorDES = KeyGenerator.getInstance("DES");
             generadorDES.init(56);
             clave = generadorDES.generateKey();
 
+            // Crear un cifrador con DES en modo ECB y PKCS5Padding
             Cipher cifrador = Cipher.getInstance("DES/ECB/PKCS5Padding");
             cifrador.init(Cipher.ENCRYPT_MODE, clave);
 
             FileInputStream entrada = new FileInputStream(archivoSeleccionado);
-            FileOutputStream salida = new FileOutputStream(archivoSeleccionado.getAbsolutePath() + ".cifrado");
+            ByteArrayOutputStream salida = new ByteArrayOutputStream();
 
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[1024];
             int bytesleidos;
 
             while ((bytesleidos = entrada.read(buffer)) != -1) {
@@ -91,7 +94,11 @@ public class Main extends JFrame {
             if (cifradoFinal != null) salida.write(cifradoFinal);
 
             entrada.close();
-            salida.close();
+
+            // Convertir los datos cifrados a Base64 para mostrar
+            byte[] textoCifrado = salida.toByteArray();
+            String textoCifradoBase64 = Base64.getEncoder().encodeToString(textoCifrado);
+            areaTexto.setText(textoCifradoBase64); // Mostrar texto cifrado
 
             JOptionPane.showMessageDialog(this, "Archivo cifrado correctamente.");
         } catch (Exception ex) {
@@ -107,13 +114,17 @@ public class Main extends JFrame {
         }
 
         try {
+            // Convertir el texto cifrado de Base64 a bytes
+            byte[] bytesCifrados = Base64.getDecoder().decode(areaTexto.getText());
+
+            // Crear un descifrador con DES en modo ECB y PKCS5Padding
             Cipher descifrador = Cipher.getInstance("DES/ECB/PKCS5Padding");
             descifrador.init(Cipher.DECRYPT_MODE, clave);
 
-            FileInputStream entrada = new FileInputStream(archivoSeleccionado.getAbsolutePath() + ".cifrado");
+            ByteArrayInputStream entrada = new ByteArrayInputStream(bytesCifrados);
             ByteArrayOutputStream salidaBytes = new ByteArrayOutputStream();
 
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[1024];
             int bytesleidos;
 
             while ((bytesleidos = entrada.read(buffer)) != -1) {
@@ -126,8 +137,9 @@ public class Main extends JFrame {
 
             entrada.close();
 
-            String texto = new String(salidaBytes.toByteArray());
-            areaTexto.setText(texto);
+            // Mostrar el texto descifrado en el JTextArea
+            String textoDescifrado = new String(salidaBytes.toByteArray());
+            areaTexto.setText(textoDescifrado); // Mostrar texto descifrado
             JOptionPane.showMessageDialog(this, "Texto descifrado mostrado.");
         } catch (Exception ex) {
             ex.printStackTrace();
