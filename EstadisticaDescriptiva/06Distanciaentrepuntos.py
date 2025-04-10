@@ -1,44 +1,72 @@
-import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
-#Definimos las coordenadas de nuestro sistema de tiendas
-
-tiendas= {
-    'Tienda A' : (1,1),
-    'Tienda B' : (1,5),
-    'Tienda C' : (7,1),
-    'Tienda D' : (3,3),
-    'Tienda E' : (8,8)
+# Definimos las coordenadas de los puntos
+puntos = {
+    'Punto A': (2, 3),
+    'Punto B': (5, 4),
+    'Punto C': (1, 1),
+    'Punto D': (6, 7),
+    'Punto E': (3, 5),
+    'Punto F': (8, 2),
+    'Punto G': (4, 6),
+    'Punto H': (2, 1)
 }
 
-#Convertir las coordenadas en un frame para facilitar el calculo
+# Convertimos las coordenadas en un DataFrame para facilitar el cálculo
+df_puntos = pd.DataFrame(puntos).T
+df_puntos.columns = ['X', 'Y']
 
-df_tiendas=pd.DataFrame(tiendas).T
-df_tiendas.columns = ['x','y']
-print('Coordenadas de las tiendas: ')
-print(df_tiendas)
+# Inicializamos los DataFrame para los resultados de distancias
+distancias_euclidiana = pd.DataFrame(index=df_puntos.index, columns=df_puntos.index)
+distancias_manhattan = pd.DataFrame(index=df_puntos.index, columns=df_puntos.index)
+distancias_chebyshev = pd.DataFrame(index=df_puntos.index, columns=df_puntos.index)
 
-#Inicialiamos los dataframes de los que vamos a obtener para el calculo de distancias
+# Calculamos las distancias
+for i in df_puntos.index:
+    for j in df_puntos.index:
+        # Distancia Euclidiana
+        distancias_euclidiana.loc[i, j] = distance.euclidean(df_puntos.loc[i], df_puntos.loc[j])
+        
+        # Distancia Manhattan
+        distancias_manhattan.loc[i, j] = distance.cityblock(df_puntos.loc[i], df_puntos.loc[j])
+        
+        # Distancia Chebyshev
+        distancias_chebyshev.loc[i, j] = distance.chebyshev(df_puntos.loc[i], df_puntos.loc[j])
 
-distancias_punto1 = pd.DataFrame(index=df_tiendas.index, columns=df_tiendas.index)
-distancias_punto2 = pd.DataFrame(index=df_tiendas.index, columns=df_tiendas.index)
-distancias_punto3 = pd.DataFrame(index=df_tiendas.index, columns=df_tiendas.index)
+# Mostrar los resultados
+print('Distancia Euclidiana entre los puntos:')
+print(distancias_euclidiana)
 
-#Vamos a calcular las distancias
-for i in df_tiendas.index: 
-    for j in df_tiendas.index:
-        #Defino la distancia ecluidiana del primer punto
-        distancias_punto1.loc[i, j]=distance.euclidean(df_tiendas.loc[i], df_tiendas.loc[j]) 
-        distancias_punto2.loc[i, j]=distance.euclidean(df_tiendas.loc[i], df_tiendas.loc[j]) 
-        distancias_punto3.loc[i, j]=distance.euclidean(df_tiendas.loc[i], df_tiendas.loc[j]) 
+print('\nDistancia Manhattan entre los puntos:')
+print(distancias_manhattan)
 
-#Mostrar resultados
-print('/n Distancia Manhattan entre cada una de las tiendas: ')
-print(distancias_punto1)
+print('\nDistancia Chebyshev entre los puntos:')
+print(distancias_chebyshev)
 
-print('/n Distancia Manhattan entre cada una de las tiendas: ')
-print(distancias_punto2)
+# Determinamos los puntos más cercanos y más alejados para cada tipo de distancia
 
-print('/n Distancia Manhattan entre cada una de las tiendas:  ')
-print(distancias_punto3)
+# Función para encontrar el punto más cercano y más alejado
+def obtener_extremos(distancias):
+    distancias_unstack = distancias.unstack()
+    distancias_unstack = distancias_unstack[distancias_unstack != 0]  # Eliminamos las distancias a sí mismos
+    min_distancia = distancias_unstack.idxmin()
+    max_distancia = distancias_unstack.idxmax()
+    return min_distancia, distancias_unstack[min_distancia], max_distancia, distancias_unstack[max_distancia]
+
+# Obtener los extremos para cada tipo de distancia
+min_euclidiana, dist_min_euclidiana, max_euclidiana, dist_max_euclidiana = obtener_extremos(distancias_euclidiana)
+min_manhattan, dist_min_manhattan, max_manhattan, dist_max_manhattan = obtener_extremos(distancias_manhattan)
+min_chebyshev, dist_min_chebyshev, max_chebyshev, dist_max_chebyshev = obtener_extremos(distancias_chebyshev)
+
+print("\nDistancia más cercana y más lejana en Euclidiana:")
+print(f'Más cercana: {min_euclidiana} con distancia {dist_min_euclidiana}')
+print(f'Más lejana: {max_euclidiana} con distancia {dist_max_euclidiana}')
+
+print("\nDistancia más cercana y más lejana en Manhattan:")
+print(f'Más cercana: {min_manhattan} con distancia {dist_min_manhattan}')
+print(f'Más lejana: {max_manhattan} con distancia {dist_max_manhattan}')
+
+print("\nDistancia más cercana y más lejana en Chebyshev:")
+print(f'Más cercana: {min_chebyshev} con distancia {dist_min_chebyshev}')
+print(f'Más lejana: {max_chebyshev} con distancia {dist_max_chebyshev}')
